@@ -151,3 +151,16 @@ document.getElementById("currencySwitcher").addEventListener("change", (e) => {
 
 loadAllCryptoData();
 setInterval(loadAllCryptoData, 30000);
+function toggleMenu() {
+  const menu = document.getElementById("mobileMenu");
+  menu.classList.toggle("hidden");
+}
+
+// Optional: Auto-hide menu when a link is clicked
+document.addEventListener("DOMContentLoaded", () => {
+  document.querySelectorAll(".mobile-menu a").forEach(link => {
+    link.addEventListener("click", () => {
+      document.getElementById("mobileMenu").classList.add("hidden");
+    });
+  });
+});
