@@ -1,0 +1,59 @@
+ <!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CryptoPulse – Live Market Tracker</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <header>
+    <h1>TenjikuCryptroUpdates</h1>
+    <p>Track 9000+ Cryptocurrencies in Real-Time</p>
+  </header>
+
+  <!-- 🔍 Search & 💱 Currency Switcher -->
+  <nav class="controls">
+    <input type="text" id="searchBar" placeholder="Search Crypto..." />
+    <select id="currencySwitcher">
+      <option value="usd">USD ($)</option>
+      <option value="inr">INR (₹)</option>
+      <option value="eur">EUR (€)</option>
+      <option value="btc">BTC</option>
+    </select>
+  </nav>
+
+  <main>
+    <!-- 📈 Tabs -->
+    <div class="tab-buttons">
+      <button onclick="showTab('all')" class="active">All Coins</button>
+      <button onclick="showTab('gainers')">Top Gainers</button>
+      <button onclick="showTab('losers')">Top Losers</button>
+    </div>
+
+    <!-- Coin List -->
+    <div id="crypto-list" class="coin-list"></div>
+
+    <!-- Pagination -->
+    <div class="pagination">
+      <button onclick="changePage(-1)">← Prev</button>
+      <span id="page-number">Page 1</span>
+      <button onclick="changePage(1)">Next →</button>
+    </div>
+
+    <!-- Chart -->
+    <div class="chart-area">
+      <h2 id="chart-title">Select a coin to view its chart</h2>
+      <canvas id="chart"></canvas>
+    </div>
+  </main>
+
+  <!-- Notifications -->
+  <div id="notifications" class="notifications"></div>
+
+  <!-- Script -->
+  <script src="script.js"></script>
+</body>
+</html>
