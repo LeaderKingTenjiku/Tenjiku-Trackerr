@@ -1,58 +1,59 @@
-document.getElementById("send").addEventListener("click", async () => {
-  const input = document.getElementById("msg");
-  const userMessage = input.value.trim();
-  if (!userMessage) return;
+const fetch = require("node-fetch");
 
-  const chatBox = document.getElementById("chat-box");
-  chatBox.innerHTML += `<p><strong>You:</strong> ${userMessage}</p>`;
-  input.value = "";
-
+exports.handler = async (event) => {
   try {
-    // 🔁 Step 1: Try extracting coin name from user question
-    const coinMatch = userMessage.match(/\b(bitcoin|ethereum|solana|dogecoin|bnb|xrp|cardano)\b/i);
-    let coin = coinMatch ? coinMatch[0].toLowerCase() : null;
+    const { message } = JSON.parse(event.body);
 
-    let coinDataText = "No specific coin mentioned.";
+    // Step 1: Realtime crypto price fetch from CoinGecko
+    const cryptoResponse = await fetch(
+      "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum&vs_currencies=usd"
+    );
 
-    if (coin) {
-      // 🔁 Step 2: Fetch crypto data from CoinGecko
-      const res = await fetch(`https://api.coingecko.com/api/v3/coins/${coin}`);
-      const data = await res.json();
-
-      const price = data.market_data.current_price.usd;
-      const change = data.market_data.price_change_percentage_24h;
-      const volume = data.market_data.total_volume.usd;
-
-      coinDataText = `
-      Coin: ${data.name}
-      Price: $${price.toLocaleString()}
-      24h Change: ${change.toFixed(2)}%
-      24h Volume: $${volume.toLocaleString()}
-      `;
+    if (!cryptoResponse.ok) {
+      throw new Error("CoinGecko API failed");
     }
 
-    // 🧠 Step 3: Send to AI Assistant
-    const res2 = await fetch("/api/chatgpt", {
+    const cryptoData = await cryptoResponse.json();
+    const btcPrice = cryptoData.bitcoin.usd;
+    const ethPrice = cryptoData.ethereum.usd;
+
+    // Step 2: Create AI Prompt with live price
+    const aiPrompt = `
+BTC current price: $${btcPrice}
+ETH current price: $${ethPrice}
+User asked: ${message}
+Now, predict market movement for next 24 hours and suggest good crypto to watch.
+    `;
+
+    // Step 3: Call OpenRouter AI
+    const aiResponse = await fetch("https://openrouter.ai/api/v1/chat/completions", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`,
+        "Content-Type": "application/json"
+      },
       body: JSON.stringify({
-        message: `You are a crypto expert. Use the following data and the user's question to reply smartly.
-
-        DATA:
-        ${coinDataText}
-
-        USER QUESTION:
-        ${userMessage}
-        `
+        model: "mistral/mistral-7b-instruct",
+        messages: [
+          { role: "system", content: "You are a crypto expert AI who predicts future trends based on live price." },
+          { role: "user", content: aiPrompt }
+        ]
       })
     });
 
-    const data2 = await res2.json();
-    chatBox.innerHTML += `<p><strong>AI:</strong> ${data2.reply}</p>`;
-    chatBox.scrollTop = chatBox.scrollHeight;
+    const aiData = await aiResponse.json();
+    const reply = aiData.choices?.[0]?.message?.content || "AI did not respond.";
 
-  } catch (err) {
-    chatBox.innerHTML += `<p><strong>AI:</strong> Sorry, couldn't fetch crypto info or reply.</p>`;
-    console.error(err);
+    return {
+      statusCode: 200,
+      body: JSON.stringify({ reply })
+    };
+
+  } catch (error) {
+    console.error("Error:", error.message);
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ reply: "Sorry, couldn't fetch crypto or reply." })
+    };
   }
-});
+};
