@@ -1,8 +1,0 @@
-[build]
-  functions = "netlify/functions"
-  publish = "."
-
-[[redirects]]
-  from = "/api/chatgpt"
-  to = "/.netlify/functions/chatgpt"
-  status = 200
